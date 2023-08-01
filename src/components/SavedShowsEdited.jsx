@@ -8,6 +8,17 @@ import { AiOutlineClose } from 'react-icons/ai';
 const SavedShows = () => {
   const [movies, setMovies] = useState([]);
   const { user } = UserAuth();
+    const movieRef = doc(db, 'users', `${user?.email}`);
+  const moviedocSnap = await getDoc(movieRef);
+
+  let movieDocExists = false;
+  if (moviedocSnap.exists()) {
+    userDocExists = true;
+  } else {
+    await setDoc(movieRef, {savedshows: []});
+  }
+
+  const savedshows = movieDocSnap.data()?.savedshows || [];
 
   const slideLeft = () => {
     var slider = document.getElementById('slider');
@@ -20,14 +31,20 @@ const SavedShows = () => {
 
   useEffect(() => {
     onSnapshot(doc(db, 'users', `${user?.email}`), (doc) => {
-      //console.log(doc.data());
       setMovies(doc.data()?.savedShows);
-      //console.log(movies);
-    }, error => {
-  console.log(error);});
-  }, [user?.email, movies]);
+    });
+  }, [user?.email]);
 
-  const movieRef = doc(db, 'users', `${user?.email}`);
+  if(userDocExists){
+    await updateDoc(movieRef, {
+      savedShows: updatedShows
+    });
+  }else {
+    await setDoc(movieRef, {
+      savedShows: updaeShows
+    });
+  }
+
 
   const deleteShow = async (passedID) => {
       try {
@@ -38,6 +55,8 @@ const SavedShows = () => {
       } catch (error) {
           console.log(error)
       }
+  }
+  console.log('movies', movies);
 
   return (
     <>
@@ -52,7 +71,7 @@ const SavedShows = () => {
           id={'slider'}
           className='w-full h-full overflow-x-scroll whitespace-nowrap scroll-smooth scrollbar-hide relative'
         >
-          {movies.length > 0 && movies.map((item) => (
+          {Array.isArray(movies) && movies.length > 0 && movies.map((item) => (
             <div
               key={item.id}
               className='w-[160px] sm:w-[200px] md:w-[240px] lg:w-[280px] inline-block cursor-pointer relative p-2'
@@ -62,7 +81,6 @@ const SavedShows = () => {
                 src={`https://image.tmdb.org/t/p/w500/${item?.img}`}
                 alt={item?.title}
               />
-              <p>Be vigilant</p> 
               <div className='absolute top-0 left-0 w-full h-full hover:bg-black/80 opacity-0 hover:opacity-100 text-white'>
                 <p className='white-space-normal text-xs md:text-sm font-bold flex justify-center items-center h-full text-center'>
                   {item?.title}
@@ -80,6 +98,6 @@ const SavedShows = () => {
       </div>
     </>
   );
-}};
+};
 
-export default SavedShows
+export default SavedShows;
